@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#050810">
+<title>Nexora · Mantenimiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#050810;
+  --bg2:#080d1c;
+  --bg3:#0d1428;
+  --bg4:#121932;
+  --b1:rgba(56,140,255,0.07);
+  --b2:rgba(56,140,255,0.17);
+  --b3:rgba(56,140,255,0.40);
+  --text:#cce0ff;
+  --muted:#1e3060;
+  --m2:#4a6a9e;
+  --acc:#3d8eff;
+  --acc2:#1a5fd4;
+  --achi:#72b4ff;
+  --adim:rgba(56,140,255,0.1);
+  --aglow:rgba(56,140,255,0.28);
+  --cyan:#00ccff;
+  --red:#ff4466;
+  --amber:#ffaa00;
+  --green:#00dda8;
+  --r:12px;
+  --rs:7px;
+  --hh:54px;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'Outfit',sans-serif;color:var(--text);position:relative;}
+
+/* dot grid */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(circle,rgba(56,140,255,0.12) 1px,transparent 1px);
+  background-size:28px 28px;}
+
+/* scan beam */
+body::after{content:'';position:fixed;left:0;right:0;height:1px;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(56,140,255,0.4),rgba(0,204,255,0.25),transparent);
+  animation:scan 8s linear infinite;}
+@keyframes scan{from{top:-1px}to{top:100vh}}
+
+/* ── HEADER ── */
+#hdr{position:fixed;top:0;left:0;right:0;z-index:800;height:var(--hh);
+  background:rgba(5,8,16,0.97);backdrop-filter:blur(24px);
+  border-bottom:0.5px solid var(--b2);
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
+.logo{font-family:'Space Mono',monospace;font-size:17px;font-weight:700;
+  display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:-0.5px;}
+.lhex{width:30px;height:30px;border-radius:7px;background:var(--adim);border:0.5px solid var(--b3);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--acc);
+  box-shadow:0 0 14px var(--aglow);animation:hpulse 3s infinite;}
+@keyframes hpulse{0%,100%{box-shadow:0 0 10px var(--aglow)}50%{box-shadow:0 0 22px var(--aglow),0 0 44px rgba(56,140,255,0.1)}}
+.lword em{color:var(--acc);font-style:normal;}
+.hright{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.hbadge{background:var(--adim);border:0.5px solid var(--b3);border-radius:20px;
+  padding:3px 10px;font-size:10px;color:var(--achi);letter-spacing:1px;
+  font-family:'Space Mono',monospace;}
+.hloc{font-size:10px;color:var(--m2);font-family:'Space Mono',monospace;}
+
+/* ── PROGRESS ── */
+#pgw{position:fixed;top:var(--hh);left:0;right:0;z-index:799;height:2px;background:rgba(56,140,255,0.06);}
+#pgf{height:100%;background:linear-gradient(90deg,var(--acc),var(--cyan));
+  box-shadow:0 0 8px var(--aglow);width:0%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);}
+
+/* ── SCREENS ── */
+#screens{position:fixed;top:var(--hh);left:0;right:0;bottom:0;overflow:hidden;z-index:2;}
+.scr{position:absolute;top:0;left:0;right:0;bottom:0;
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  padding:16px 16px 76px;opacity:0;pointer-events:none;
+  transform:translateX(100%);
+  transition:transform 0.38s cubic-bezier(0.4,0,0.2,1),opacity 0.38s;
+  will-change:transform,opacity;background:var(--bg);}
+.scr.active{opacity:1;pointer-events:all;transform:translateX(0);}
+
+/* ── STEP BAR ── */
+.steps{display:flex;background:var(--bg2);border:0.5px solid var(--b2);
+  border-radius:var(--r);overflow:hidden;margin-bottom:18px;}
+.step{flex:1;padding:9px 4px;text-align:center;border-right:0.5px solid var(--b1);}
+.step:last-child{border-right:none;}
+.step.act{background:var(--adim);}
+.step.done{background:rgba(56,140,255,0.05);}
+.sn{width:20px;height:20px;border-radius:4px;border:0.5px solid var(--b2);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:10px;font-family:'Space Mono',monospace;margin-bottom:2px;transition:all 0.2s;}
+.step.act .sn{background:var(--acc);color:#fff;border-color:var(--acc);box-shadow:0 0 10px var(--aglow);}
+.step.done .sn{background:var(--green);color:var(--bg);border-color:var(--green);}
+.sl{font-size:9px;color:var(--m2);font-family:'Space Mono',monospace;display:block;}
+.step.act .sl{color:var(--achi);}
+
+/* ── FOOTER ── */
+#ftr{position:fixed;bottom:0;left:0;right:0;z-index:800;
+  background:rgba(5,8,16,0.97);backdrop-filter:blur(20px);
+  border-top:0.5px solid var(--b2);
+  display:flex;align-items:center;gap:10px;padding:10px 16px;height:62px;}
+
+/* ── BUTTONS ── */
+.btnp{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;
+  border-radius:var(--rs);padding:13px 18px;font-size:12px;
+  font-family:'Space Mono',monospace;font-weight:700;cursor:pointer;
+  transition:all 0.15s;text-transform:uppercase;letter-spacing:0.5px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1;
+  box-shadow:0 2px 16px rgba(56,140,255,0.22);}
+.btnp:disabled{opacity:0.2;cursor:default;box-shadow:none;}
+.btnp:active:not(:disabled){transform:scale(0.97);}
+.btns{background:var(--bg3);color:var(--text);border:0.5px solid var(--b2);
+  border-radius:var(--rs);padding:13px 14px;font-size:12px;
+  font-family:'Space Mono',monospace;cursor:pointer;transition:all 0.15s;
+  display:inline-flex;align-items:center;justify-content:center;text-transform:uppercase;}
+.btns:active{background:var(--bg4);}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:0.5px solid var(--b2);border-radius:var(--r);
+  padding:14px;margin-bottom:12px;position:relative;}
+.card::before{content:'';position:absolute;inset:0;border-radius:var(--r);
+  background:radial-gradient(ellipse at 0% 0%,rgba(56,140,255,0.04),transparent 60%);
+  pointer-events:none;}
+.cl{font-size:10px;color:var(--m2);letter-spacing:1.5px;text-transform:uppercase;
+  font-family:'Space Mono',monospace;font-weight:700;margin-bottom:12px;display:block;}
+.secl{font-size:10px;color:var(--m2);letter-spacing:1.5px;text-transform:uppercase;
+  font-family:'Space Mono',monospace;font-weight:700;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;}
+.secl::after{content:'';flex:1;height:0.5px;background:linear-gradient(90deg,var(--b2),transparent);}
+
+/* ── HERO ── */
+.htag{display:inline-flex;align-items:center;gap:7px;background:var(--adim);
+  border:0.5px solid var(--b3);border-radius:20px;padding:5px 13px;
+  font-size:10px;color:var(--achi);letter-spacing:2px;text-transform:uppercase;
+  font-family:'Space Mono',monospace;margin-bottom:16px;}
+.hdot{width:6px;height:6px;border-radius:50%;background:var(--acc);
+  box-shadow:0 0 6px var(--aglow);animation:pd 2s infinite;}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero h1{font-size:clamp(28px,7.5vw,46px);font-weight:900;line-height:1.05;
+  letter-spacing:-1.5px;margin-bottom:10px;}
+.a1{color:var(--acc);} .a2{color:var(--cyan);}
+.hero p{font-size:14px;color:var(--m2);line-height:1.6;margin-bottom:16px;}
+
+.stg{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg2);
+  border:0.5px solid var(--b2);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.st{padding:12px 6px;text-align:center;border-right:0.5px solid var(--b1);}
+.st:last-child{border-right:none;}
+.stn{font-family:'Space Mono',monospace;font-size:17px;font-weight:700;color:var(--acc);}
+.stl{font-size:9px;color:var(--m2);margin-top:2px;}
+
+.syg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.sy{background:var(--bg2);border:0.5px solid var(--b1);border-radius:var(--r);padding:12px 10px;}
+.sy.r{border-color:rgba(255,68,102,0.2);}
+.sy.a{border-color:rgba(255,170,0,0.2);}
+.sy.b{border-color:rgba(56,140,255,0.25);}
+.si{font-size:16px;margin-bottom:5px;}
+.st2{font-size:11px;font-weight:700;margin-bottom:2px;}
+.sy.r .st2{color:var(--red);} .sy.a .st2{color:var(--amber);} .sy.b .st2{color:var(--achi);}
+.sd{font-size:10px;color:var(--m2);line-height:1.4;}
+
+.term{background:var(--bg2);border:0.5px solid var(--b2);border-radius:var(--r);
+  padding:14px;margin-bottom:14px;position:relative;overflow:hidden;}
+.term::after{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 17px,rgba(56,140,255,0.015) 17px,rgba(56,140,255,0.015) 18px);
+  pointer-events:none;}
+.th{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+.td{width:8px;height:8px;border-radius:50%;}
+.tt{font-family:'Space Mono',monospace;font-size:10px;color:var(--m2);margin-left:5px;}
+.tl{font-family:'Space Mono',monospace;font-size:11px;line-height:1.9;color:var(--m2);}
+.tl.red{color:var(--red);} .tl.amb{color:var(--amber);} .tl.blu{color:var(--achi);}
+.tcur{animation:blink 1s infinite;color:var(--cyan);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── PLANS ── */
+.pc{background:var(--bg2);border:0.5px solid var(--b2);border-radius:var(--r);
+  padding:16px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color 0.2s,box-shadow 0.2s;}
+.pc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--acc),var(--cyan));opacity:0;transition:opacity 0.25s;}
+.pc.sel::before,.pc.feat::before{opacity:1;}
+.pc.sel{border-color:var(--b3);box-shadow:0 0 24px rgba(56,140,255,0.1),inset 0 0 30px rgba(56,140,255,0.03);}
+.pc.feat{border-color:rgba(56,140,255,0.22);}
+.pbadge{display:inline-block;background:linear-gradient(135deg,var(--acc),var(--cyan));
+  color:#fff;font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;
+  font-family:'Space Mono',monospace;letter-spacing:1px;margin-bottom:7px;}
+.pchk{position:absolute;top:14px;right:14px;width:20px;height:20px;border-radius:4px;
+  border:0.5px solid var(--b2);display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;}
+.pc.sel .pchk{background:var(--acc);border-color:var(--acc);box-shadow:0 0 8px var(--aglow);}
+.pc.sel .pchk::after{content:'✓';font-size:10px;color:#fff;font-weight:700;}
+.pn{font-size:19px;font-weight:900;letter-spacing:-0.5px;margin-bottom:1px;}
+.ps{font-size:11px;color:var(--m2);font-family:'Space Mono',monospace;margin-bottom:10px;}
+.pp{font-family:'Space Mono',monospace;font-size:19px;font-weight:700;color:var(--acc);margin-bottom:10px;}
+.pp span{font-size:11px;color:var(--m2);font-weight:400;}
+.pfs{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.pf{font-size:11px;color:var(--m2);display:flex;align-items:flex-start;gap:5px;line-height:1.35;}
+.pf::before{content:'▸';color:var(--acc);font-size:9px;flex-shrink:0;margin-top:1px;}
+.pf.no{color:rgba(30,48,96,0.7);}
+.pf.no::before{content:'–';color:var(--muted);}
+
+/* ── COUNTER ── */
+.crow{display:flex;align-items:center;gap:14px;}
+.cbtn{width:38px;height:38px;border-radius:var(--rs);background:var(--bg3);
+  border:0.5px solid var(--b2);color:var(--text);font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.cbtn:active:not(:disabled){background:var(--adim);border-color:var(--b3);color:var(--achi);}
+.cbtn:disabled{opacity:0.15;cursor:default;}
+.cnum{font-family:'Space Mono',monospace;font-size:32px;font-weight:700;color:var(--acc);min-width:36px;text-align:center;}
+
+/* freq */
+.fwrap{display:flex;flex-direction:column;gap:8px;}
+.fo{display:flex;align-items:center;justify-content:space-between;
+  padding:11px 13px;border:0.5px solid var(--b1);border-radius:var(--rs);cursor:pointer;transition:all 0.15s;}
+.fo.sel{border-color:var(--b3);background:var(--adim);}
+.fl{font-size:13px;}
+.fd{font-size:11px;color:var(--cyan);font-family:'Space Mono',monospace;font-weight:700;}
+
+/* toggle */
+.tog{width:40px;height:22px;border-radius:11px;background:var(--bg3);
+  border:0.5px solid var(--b2);cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;}
+.tog.on{background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:var(--acc);box-shadow:0 0 8px var(--aglow);}
+.tog::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;
+  background:#fff;top:3px;left:3px;transition:left 0.2s;}
+.tog.on::after{left:21px;}
+.ar{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:0.5px solid var(--b1);}
+.ar:last-child{border-bottom:none;}
+.ai{flex:1;}
+.at{font-size:13px;}
+.as{font-size:11px;color:var(--m2);margin-top:1px;}
+.ap{font-size:11px;color:var(--m2);font-family:'Space Mono',monospace;margin-right:10px;}
+
+/* price box */
+.pbox{background:var(--bg2);border:0.5px solid var(--b2);border-radius:var(--r);
+  padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
+.pbox::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acc),var(--cyan),transparent);opacity:0.5;}
+.pr{display:flex;justify-content:space-between;font-size:11px;color:var(--m2);
+  padding:4px 0;font-family:'Space Mono',monospace;}
+.pr.gr{color:var(--green);}
+.pr.cy{color:var(--cyan);}
+.pdv{border:none;border-top:0.5px solid var(--b2);margin:8px 0;}
+.ptr{display:flex;justify-content:space-between;align-items:baseline;}
+.ptl{font-size:12px;color:var(--m2);}
+.ptv{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--text);}
+.piv{font-size:10px;color:var(--m2);text-align:right;margin-top:3px;font-family:'Space Mono',monospace;}
+.phi{background:rgba(56,140,255,0.06);border:0.5px solid var(--b2);border-radius:var(--rs);
+  padding:9px 12px;font-size:11px;color:var(--achi);margin-top:10px;font-family:'Space Mono',monospace;}
+
+/* ── CALENDAR ── */
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cnv{background:var(--bg3);border:0.5px solid var(--b2);color:var(--text);border-radius:var(--rs);
+  width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all 0.15s;}
+.cnv:active{background:var(--adim);border-color:var(--b3);}
+.ct{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--achi);}
+.cdow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:5px;}
+.cdow span{font-size:9px;color:var(--m2);text-align:center;padding:2px 0;font-family:'Space Mono',monospace;}
+.cgr{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.db{aspect-ratio:1;background:transparent;border:0.5px solid transparent;border-radius:var(--rs);
+  color:var(--text);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;font-family:'Outfit',sans-serif;}
+.db:active:not(.dis){background:var(--bg3);}
+.db.sel{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-weight:700;box-shadow:0 0 10px var(--aglow);}
+.db.dis{opacity:0.18;cursor:default;}
+.db.tod{border-color:var(--b3);}
+
+.hph{font-size:11px;color:var(--m2);font-family:'Space Mono',monospace;padding:8px 0;}
+.hwr{display:flex;flex-wrap:wrap;gap:7px;}
+.hb{padding:8px 12px;background:var(--bg3);border:0.5px solid var(--b2);border-radius:var(--rs);
+  color:var(--text);font-size:11px;cursor:pointer;transition:all 0.15s;font-family:'Space Mono',monospace;}
+.hb:active:not(.taken){border-color:var(--b3);color:var(--achi);}
+.hb.sel{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border-color:var(--acc);box-shadow:0 0 8px var(--aglow);}
+.hb.taken{opacity:0.18;cursor:default;text-decoration:line-through;}
+
+.dbadge{background:rgba(56,140,255,0.08);border:0.5px solid var(--b3);border-radius:var(--rs);
+  padding:10px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--achi);
+  display:none;margin-top:12px;line-height:1.6;}
+
+/* ── FORM ── */
+.sb{background:var(--bg2);border:0.5px solid var(--b2);border-radius:var(--r);padding:14px;margin-bottom:12px;}
+.sr{display:flex;justify-content:space-between;align-items:flex-start;
+  padding:6px 0;border-bottom:0.5px solid var(--b1);}
+.sr:last-child{border-bottom:none;}
+.sk{color:var(--m2);font-family:'Space Mono',monospace;font-size:11px;flex-shrink:0;margin-right:10px;}
+.sv{color:var(--text);text-align:right;font-size:12px;word-break:break-word;max-width:62%;}
+.sv.cy{color:var(--cyan);font-family:'Space Mono',monospace;}
+.sv.gr{color:var(--green);}
+
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:11px;}
+.fg label{font-size:10px;color:var(--m2);letter-spacing:1px;text-transform:uppercase;font-family:'Space Mono',monospace;}
+input,textarea{background:var(--bg3);border:0.5px solid var(--b2);border-radius:var(--rs);
+  padding:11px 13px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;
+  outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%;}
+input:focus,textarea:focus{border-color:var(--b3);box-shadow:0 0 0 2px rgba(56,140,255,0.08);}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+textarea{resize:none;height:68px;}
+
+/* ── CONFIRMATION ── */
+.cc{text-align:center;padding:14px 0 18px;}
+.cring{width:70px;height:70px;border-radius:14px;background:var(--adim);
+  border:1.5px solid var(--b3);display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;font-size:26px;color:var(--acc);
+  box-shadow:0 0 30px var(--aglow),0 0 60px rgba(56,140,255,0.08);
+  animation:pop 0.45s cubic-bezier(0.17,0.67,0.35,1.3);}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.cref{display:inline-block;background:var(--bg3);border:0.5px solid var(--b2);
+  border-radius:var(--rs);padding:3px 12px;font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--m2);margin-bottom:10px;letter-spacing:1.5px;}
+.ch2{font-size:22px;font-weight:900;letter-spacing:-0.5px;margin-bottom:5px;}
+.csub{font-size:13px;color:var(--m2);line-height:1.6;}
+
+.spl{display:flex;align-items:center;gap:7px;font-size:11px;padding:8px 12px;
+  border-radius:var(--rs);font-family:'Space Mono',monospace;margin-bottom:6px;border:0.5px solid;}
+.spl.ok{background:rgba(0,221,168,0.06);color:var(--green);border-color:rgba(0,221,168,0.2);}
+.spl.warn{background:rgba(255,170,0,0.06);color:var(--amber);border-color:rgba(255,170,0,0.2);}
+.spl.err{background:rgba(255,68,102,0.06);color:var(--red);border-color:rgba(255,68,102,0.2);}
+.spl.ld{background:rgba(56,140,255,0.05);color:var(--m2);border-color:var(--b2);}
+.spin{width:11px;height:11px;border:1.5px solid rgba(56,140,255,0.15);
+  border-top-color:var(--acc);border-radius:50%;animation:sp 0.7s linear infinite;flex-shrink:0;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.pl{display:flex;flex-direction:column;gap:7px;}
+.pi{font-size:12px;color:var(--m2);display:flex;gap:7px;align-items:flex-start;line-height:1.4;}
+.pi::before{content:'▸';color:var(--acc);font-family:'Space Mono',monospace;font-size:10px;flex-shrink:0;margin-top:1px;}
+
+/* gradient line */
+.nxline{height:1px;background:linear-gradient(90deg,transparent,var(--acc),var(--cyan),transparent);margin:14px 0;opacity:0.3;}
+
+/* ── CONFIG MODAL ── */
+#cfgm{display:none;position:fixed;inset:0;z-index:2000;background:rgba(5,8,16,0.98);
+  overflow-y:auto;padding:68px 16px 80px;}
+.cbanner{font-family:'Space Mono',monospace;font-size:11px;color:var(--amber);
+  background:rgba(255,170,0,0.06);border:0.5px solid rgba(255,170,0,0.2);
+  border-radius:var(--r);padding:12px 14px;margin-bottom:16px;line-height:1.7;}
+.cg{display:flex;flex-direction:column;gap:5px;margin-bottom:11px;}
+.cg label{font-size:10px;color:var(--m2);letter-spacing:1px;text-transform:uppercase;font-family:'Space Mono',monospace;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:72px;left:50%;
+  transform:translateX(-50%) translateY(60px);
+  background:var(--bg2);border:0.5px solid var(--b2);border-radius:var(--r);
+  padding:11px 18px;font-size:12px;font-family:'Space Mono',monospace;
+  z-index:3000;opacity:0;transition:all 0.3s;white-space:nowrap;max-width:88vw;text-align:center;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#toast.ok{border-color:rgba(0,221,168,0.3);color:var(--green);}
+#toast.err{border-color:rgba(255,68,102,0.3);color:var(--red);}
+
+/* ── ANIM ── */
+@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fu 0.35s both;}
+.fu1{animation-delay:.04s}.fu2{animation-delay:.1s}.fu3{animation-delay:.16s}
+.fu4{animation-delay:.22s}.fu5{animation-delay:.28s}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="logo" id="logo">
+    <div class="lhex">⬡</div>
+    <span class="lword">Nexo<em>ra</em></span>
+  </div>
+  <div class="hright">
+    <div class="hbadge">DIAGNÓSTICO $10.000</div>
+    <div class="hloc">📍 Apartadó · Antioquia</div>
+  </div>
+</div>
+
+<div id="pgw"><div id="pgf"></div></div>
+
+<div id="screens">
+
+<!-- ══ S0: HERO ══ -->
+<div class="scr active" id="s0">
+  <div class="fu fu1"><div class="htag"><span class="hdot"></span>Sistema activo · Apartadó</div></div>
+  <div class="hero">
+    <h1 class="fu fu2">Tu equipo<br><span class="a1">también</span> se<br><span class="a2">enferma</span></h1>
+    <p class="fu fu3">El 74% de las fallas se anuncian semanas antes.<br>Diagnóstico <strong style="color:var(--text)">$10.000</strong> · Domicilio <strong style="color:var(--cyan)">gratis</strong>.</p>
+  </div>
+  <div class="stg fu fu3">
+    <div class="st"><div class="stn">$10k</div><div class="stl">Diagnóstico</div></div>
+    <div class="st"><div class="stn">$0</div><div class="stl">Domicilio</div></div>
+    <div class="st"><div class="stn">+300</div><div class="stl">Equipos</div></div>
+    <div class="st"><div class="stn">98%</div><div class="stl">Éxito</div></div>
+  </div>
+  <div class="syg fu fu4">
+    <div class="sy r"><div class="si">🌡️</div><div class="st2">Calor</div><div class="sd">El polvo mata en silencio.</div></div>
+    <div class="sy a"><div class="si">🐌</div><div class="st2">Lentitud</div><div class="sd">Tiempo perdido = dinero.</div></div>
+    <div class="sy b"><div class="si">💾</div><div class="st2">Datos</div><div class="sd">Un disco no avisa.</div></div>
+  </div>
+  <div class="term fu fu5">
+    <div class="th">
+      <div class="td" style="background:#ff5f57"></div>
+      <div class="td" style="background:#febc2e"></div>
+      <div class="td" style="background:#28c840"></div>
+      <span class="tt">nexora_scan.exe — Apartadó</span>
+    </div>
+    <div class="tl red">✗ CPU Temp: <strong>89°C</strong> — CRÍTICO</div>
+    <div class="tl amb">⚡ Disco fragmentado: <strong>67%</strong></div>
+    <div class="tl amb">⚡ Ventiladores: <strong>obstruidos</strong></div>
+    <div class="tl" style="color:var(--muted)">─────────────────────</div>
+    <div class="tl blu">✓ Mantenimiento preventivo: +3 años de vida <span class="tcur">█</span></div>
+  </div>
+</div>
+
+<!-- ══ S1: PLANES ══ -->
+<div class="scr" id="s1">
+  <div class="steps">
+    <div class="step act"><div class="sn">1</div><span class="sl">Plan</span></div>
+    <div class="step"><div class="sn">2</div><span class="sl">Config</span></div>
+    <div class="step"><div class="sn">3</div><span class="sl">Fecha</span></div>
+    <div class="step"><div class="sn">4</div><span class="sl">Datos</span></div>
+    <div class="step"><div class="sn">5</div><span class="sl">Listo</span></div>
+  </div>
+  <div class="secl fu fu1">Elige tu plan</div>
+
+  <div class="pc fu fu2" id="pc-basico" onclick="pickPlan('basico')">
+    <div class="pchk" id="pchk-basico"></div>
+    <div class="pn">Básico</div>
+    <div class="ps">Hasta 5 equipos · 1 visita semestral</div>
+    <div class="pp">$70k <span>/ equipo / visita</span></div>
+    <div class="pfs">
+      <div class="pf">Limpieza física</div><div class="pf">Diagnóstico hw</div>
+      <div class="pf">Optimización SO</div><div class="pf">Antivirus</div>
+      <div class="pf no">Soporte remoto</div><div class="pf no">Informe mensual</div>
+    </div>
+  </div>
+
+  <div class="pc feat fu fu3" id="pc-empresarial" onclick="pickPlan('empresarial')">
+    <div class="pbadge">MÁS POPULAR</div>
+    <div class="pchk" id="pchk-empresarial"></div>
+    <div class="pn">Empresarial</div>
+    <div class="ps">6 – 30 equipos · Trimestral</div>
+    <div class="pp">$65k <span>/ equipo / visita</span></div>
+    <div class="pfs">
+      <div class="pf">Todo el Básico</div><div class="pf">Soporte remoto</div>
+      <div class="pf">Informe mensual</div><div class="pf">−10% descuento</div>
+      <div class="pf no">Técnico exclusivo</div><div class="pf no">Reposición piezas</div>
+    </div>
+  </div>
+
+  <div class="pc fu fu4" id="pc-corporativo" onclick="pickPlan('corporativo')">
+    <div class="pchk" id="pchk-corporativo"></div>
+    <div class="pn">Corporativo</div>
+    <div class="ps">+30 equipos · Contrato a medida</div>
+    <div class="pp">A medida <span>/ contrato</span></div>
+    <div class="pfs">
+      <div class="pf">Todo Empresarial</div><div class="pf">Técnico exclusivo</div>
+      <div class="pf">SLA garantizado</div><div class="pf">Panel en línea</div>
+      <div class="pf">Reposición piezas</div><div class="pf">Precio negociado</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S2: COTIZADOR ══ -->
+<div class="scr" id="s2">
+  <div class="steps">
+    <div class="step done"><div class="sn">1</div><span class="sl">Plan</span></div>
+    <div class="step act"><div class="sn">2</div><span class="sl">Config</span></div>
+    <div class="step"><div class="sn">3</div><span class="sl">Fecha</span></div>
+    <div class="step"><div class="sn">4</div><span class="sl">Datos</span></div>
+    <div class="step"><div class="sn">5</div><span class="sl">Listo</span></div>
+  </div>
+  <div class="secl fu fu1">Configura tu plan</div>
+
+  <div class="card fu fu2">
+    <span class="cl">Número de equipos</span>
+    <div class="crow">
+      <button class="cbtn" id="cminus" onclick="changeEq(-1)">−</button>
+      <span class="cnum" id="eqn">1</span>
+      <button class="cbtn" id="cplus" onclick="changeEq(1)">+</button>
+      <span id="emaxl" style="font-size:10px;color:var(--m2);font-family:'Space Mono',monospace">máx. 5</span>
+    </div>
+    <div style="margin-top:9px;font-size:11px;color:var(--m2);font-family:'Space Mono',monospace">
+      <span style="color:var(--acc)" id="bpl">$70.000</span> por equipo · visita
+    </div>
+  </div>
+
+  <div class="card fu fu3" id="freqcard">
+    <span class="cl">Frecuencia</span>
+    <div class="fwrap">
+      <div class="fo sel" onclick="pickFreq(this,1,0)"><span class="fl">1 visita semestral</span><span class="fd" style="color:var(--m2)">base</span></div>
+      <div class="fo" onclick="pickFreq(this,2,10)"><span class="fl">2 visitas anuales</span><span class="fd">−10%</span></div>
+      <div class="fo" onclick="pickFreq(this,4,18)"><span class="fl">Trimestral (4/año)</span><span class="fd">−18%</span></div>
+    </div>
+  </div>
+
+  <div class="card fu fu4">
+    <span class="cl">Servicios adicionales</span>
+    <div class="ar">
+      <div class="ai"><div class="at">Soporte remoto</div><div class="as">Asistencia en línea entre visitas</div></div>
+      <span class="ap">+$80k</span><button class="tog" id="togr" onclick="togA('r',80000)"></button>
+    </div>
+    <div class="ar">
+      <div class="ai"><div class="at">Respaldo nube</div><div class="as">Backup automático mensual</div></div>
+      <span class="ap">+$60k</span><button class="tog" id="togb" onclick="togA('b',60000)"></button>
+    </div>
+    <div class="ar">
+      <div class="ai"><div class="at">Informe PDF</div><div class="as">Reporte por equipo tras cada visita</div></div>
+      <span class="ap">+$40k</span><button class="tog" id="togi" onclick="togA('i',40000)"></button>
+    </div>
+  </div>
+
+  <div class="pbox fu fu5">
+    <div class="pr"><span id="pbl">Mantenimiento base</span><span id="pbv">$70.000</span></div>
+    <div class="pr"><span>Diagnóstico inicial</span><span>$10.000</span></div>
+    <div class="pr gr"><span>Domicilio</span><span>GRATIS</span></div>
+    <div class="pr" id="prr" style="display:none"><span>Soporte remoto</span><span>$80.000</span></div>
+    <div class="pr" id="prb" style="display:none"><span>Respaldo nube</span><span>$60.000</span></div>
+    <div class="pr" id="pri" style="display:none"><span>Informe PDF</span><span>$40.000</span></div>
+    <div class="pr cy" id="prd" style="display:none"><span id="pdl">Descuento</span><span id="pdv">−$0</span></div>
+    <div class="pdv"></div>
+    <div class="ptr"><span class="ptl">Total / año</span><span class="ptv" id="ptot">$80.000</span></div>
+    <div class="piv" id="piva">+IVA 19% = <strong>$95.200 COP</strong></div>
+    <div class="phi">📍 Sin costo de desplazamiento · Apartadó y área</div>
+  </div>
+</div>
+
+<!-- ══ S3: CALENDARIO ══ -->
+<div class="scr" id="s3">
+  <div class="steps">
+    <div class="step done"><div class="sn">1</div><span class="sl">Plan</span></div>
+    <div class="step done"><div class="sn">2</div><span class="sl">Config</span></div>
+    <div class="step act"><div class="sn">3</div><span class="sl">Fecha</span></div>
+    <div class="step"><div class="sn">4</div><span class="sl">Datos</span></div>
+    <div class="step"><div class="sn">5</div><span class="sl">Listo</span></div>
+  </div>
+  <div class="secl fu fu1">Elige fecha y hora</div>
+
+  <div class="card fu fu2">
+    <div class="ch">
+      <button class="cnv" onclick="chMes(-1)">‹</button>
+      <span class="ct" id="calt"></span>
+      <button class="cnv" onclick="chMes(1)">›</button>
+    </div>
+    <div class="cdow"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+    <div class="cgr" id="calg"></div>
+    <div style="margin-top:8px;display:flex;gap:12px;font-size:9px;color:var(--m2);font-family:'Space Mono',monospace">
+      <span>⬜ libre</span><span style="color:var(--acc)">■ elegido</span><span style="opacity:.4">– no disponible</span>
+    </div>
+  </div>
+
+  <div class="card fu fu3">
+    <span class="cl">Horario disponible</span>
+    <div id="hph" class="hph">↑ Selecciona un día en el calendario</div>
+    <div id="hwr" class="hwr" style="display:none"></div>
+    <div class="dbadge" id="dbadge"></div>
+  </div>
+</div>
+
+<!-- ══ S4: FORM ══ -->
+<div class="scr" id="s4">
+  <div class="steps">
+    <div class="step done"><div class="sn">1</div><span class="sl">Plan</span></div>
+    <div class="step done"><div class="sn">2</div><span class="sl">Config</span></div>
+    <div class="step done"><div class="sn">3</div><span class="sl">Fecha</span></div>
+    <div class="step act"><div class="sn">4</div><span class="sl">Datos</span></div>
+    <div class="step"><div class="sn">5</div><span class="sl">Listo</span></div>
+  </div>
+  <div class="secl fu fu1">Resumen de cotización</div>
+  <div class="sb fu fu2">
+    <div class="sr"><span class="sk">Plan</span><span class="sv" id="sump">—</span></div>
+    <div class="sr"><span class="sk">Equipos</span><span class="sv" id="sume">—</span></div>
+    <div class="sr"><span class="sk">Frecuencia</span><span class="sv" id="sumf">—</span></div>
+    <div class="sr"><span class="sk">Fecha</span><span class="sv" id="sumd">—</span></div>
+    <div class="sr"><span class="sk">Total c/IVA</span><span class="sv cy" id="sumt">—</span></div>
+    <div class="sr"><span class="sk">Domicilio</span><span class="sv gr">GRATIS ✓</span></div>
+  </div>
+  <div class="secl fu fu2">Datos de contacto</div>
+  <div class="card fu fu3">
+    <div class="fg"><label>Nombre completo *</label><input id="fn" placeholder="Tu nombre completo"></div>
+    <div class="fg"><label>Teléfono / WhatsApp *</label><input id="ft" type="tel" placeholder="3001234567"></div>
+    <div class="fg"><label>Correo electrónico *</label><input id="fe" type="email" placeholder="correo@ejemplo.com"></div>
+    <div class="fg"><label>Dirección en Apartadó *</label><input id="fd" placeholder="Cra. 100 # 96-45, Barrio..."></div>
+    <div class="fg"><label>Observaciones (opcional)</label><textarea id="fo" placeholder="Marca, síntoma, acceso especial..."></textarea></div>
+  </div>
+</div>
+
+<!-- ══ S5: CONFIRMACIÓN ══ -->
+<div class="scr" id="s5">
+  <div class="steps">
+    <div class="step done"><div class="sn">1</div><span class="sl">Plan</span></div>
+    <div class="step done"><div class="sn">2</div><span class="sl">Config</span></div>
+    <div class="step done"><div class="sn">3</div><span class="sl">Fecha</span></div>
+    <div class="step done"><div class="sn">4</div><span class="sl">Datos</span></div>
+    <div class="step act"><div class="sn">5</div><span class="sl">Listo</span></div>
+  </div>
+  <div class="cc fu fu1">
+    <div class="cring">⬡</div>
+    <div class="cref" id="cref">DIAG-000000</div>
+    <div class="ch2">¡Cita confirmada!</div>
+    <div class="csub">Confirmación enviada a tu correo<br>y por WhatsApp.</div>
+  </div>
+  <div class="nxline"></div>
+  <div class="secl fu fu2">Comprobante</div>
+  <div class="sb fu fu3">
+    <div class="sr"><span class="sk">Ref</span><span class="sv cy" id="cref2">—</span></div>
+    <div class="sr"><span class="sk">Cliente</span><span class="sv" id="cnom">—</span></div>
+    <div class="sr"><span class="sk">Correo</span><span class="sv" id="cem" style="font-size:10px">—</span></div>
+    <div class="sr"><span class="sk">Teléfono</span><span class="sv" id="ctel">—</span></div>
+    <div class="sr"><span class="sk">Fecha</span><span class="sv" id="cfch">—</span></div>
+    <div class="sr"><span class="sk">Dirección</span><span class="sv" id="cdir">—</span></div>
+    <div class="sr"><span class="sk">Plan</span><span class="sv" id="cpln">—</span></div>
+    <div class="sr"><span class="sk">Total</span><span class="sv cy" id="ctot">—</span></div>
+    <div class="sr"><span class="sk">Domicilio</span><span class="sv gr">GRATIS ✓</span></div>
+  </div>
+  <div class="fu fu4" style="margin-bottom:12px">
+    <div id="stem" class="spl ld"><span class="spin"></span>Enviando correo...</div>
+    <div id="stwa" class="spl ld"><span class="spin"></span>Enviando WhatsApp...</div>
+  </div>
+  <div class="card fu fu5">
+    <span class="cl">Prepárate para la visita</span>
+    <div class="pl">
+      <div class="pi">Ten el equipo encendido y accesible</div>
+      <div class="pi">Clave de administrador a mano si aplica</div>
+      <div class="pi">El técnico lleva carné Nexora para identificarse</div>
+      <div class="pi">Te contactamos el día anterior para confirmar dirección</div>
+      <div class="pi">Duración estimada: 1 a 2 horas por equipo</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /screens -->
+
+<!-- FOOTER -->
+<div id="ftr">
+  <button class="btns" id="btnback" onclick="navBack()" style="display:none">← ATRÁS</button>
+  <button class="btnp" id="btnnext" onclick="navNext()">COTIZAR AHORA →</button>
+</div>
+
+<!-- CONFIG -->
+<div id="cfgm">
+  <div class="cbanner"><strong>⚙️ Credenciales Nexora</strong><br>Claves de EmailJS y CallMeBot. Triple clic en logo para acceder.</div>
+  <div class="cg"><label>EmailJS Public Key</label><input id="ck" placeholder="Tu Public Key"></div>
+  <div class="cg"><label>EmailJS Service ID</label><input id="cs" placeholder="service_xxxxxxx"></div>
+  <div class="cg"><label>EmailJS Template ID</label><input id="ctp" placeholder="template_xxxxxxx"></div>
+  <div class="cg"><label>CallMeBot API Key</label><input id="ccb" placeholder="Tu API Key"></div>
+  <div class="cg"><label>WhatsApp empresa (con código país)</label><input id="cwa" placeholder="573001234567"></div>
+  <div style="display:flex;gap:10px;margin-top:8px">
+    <button class="btnp" style="flex:1" onclick="saveCfg()">GUARDAR</button>
+    <button class="btns" onclick="document.getElementById('cfgm').style.display='none'">CERRAR</button>
+  </div>
+</div>
+
+<div id="toast"><span id="tmsg"></span></div>
+
+<script>
+// ── CONFIG ──
+var cfg={k:'0CskXLDJtHkQF48B6',s:'service_c2kosw7',tp:'template_l5gky6p',cb:'6668453',wa:'573017888635'};
+function loadCfg(){var d=localStorage.getItem('nxr3');if(d)cfg=Object.assign(cfg,JSON.parse(d));}
+function saveCfg(){
+  cfg.k=document.getElementById('ck').value.trim();
+  cfg.s=document.getElementById('cs').value.trim();
+  cfg.tp=document.getElementById('ctp').value.trim();
+  cfg.cb=document.getElementById('ccb').value.trim();
+  cfg.wa=document.getElementById('cwa').value.trim();
+  localStorage.setItem('nxr3',JSON.stringify(cfg));
+  toast('✓ Guardado','ok');
+  document.getElementById('cfgm').style.display='none';
+}
+function openCfg(){
+  loadCfg();
+  document.getElementById('ck').value=cfg.k||'0CskXLDJtHkQF48B6';
+  document.getElementById('cs').value=cfg.s||'';
+  document.getElementById('ctp').value=cfg.tp||'';
+  document.getElementById('ccb').value=cfg.cb||'';
+  document.getElementById('cwa').value=cfg.wa||'';
+  document.getElementById('cfgm').style.display='block';
+}
+loadCfg();
+
+// triple click logo
+var lc=0,lt=0;
+document.getElementById('logo').addEventListener('click',function(){
+  var n=Date.now();if(n-lt>900)lc=0;lt=n;lc++;
+  if(lc>=3){lc=0;openCfg();}
+});
+
+// ── NAVIGATION ──
+var cur=0;
+var TOTAL=6;
+var PROG=[0,16,33,50,66,100];
+var BTXT=['COTIZAR AHORA →','CONTINUAR →','CONTINUAR →','CONTINUAR →','CONFIRMAR Y ENVIAR →','NUEVA COTIZACIÓN'];
+
+function goTo(n,dir){
+  if(n<0||n>=TOTAL)return;
+  var ce=document.getElementById('s'+cur);
+  var ne=document.getElementById('s'+n);
+  ce.style.transition='transform 0.35s cubic-bezier(0.4,0,0.2,1),opacity 0.35s';
+  ce.style.transform=dir>0?'translateX(-42%)':'translateX(100%)';
+  ce.style.opacity='0';ce.style.pointerEvents='none';
+  ne.style.transition='none';
+  ne.style.transform=dir>0?'translateX(100%)':'translateX(-42%)';
+  ne.style.opacity='0';ne.style.display='block';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    ne.style.transition='transform 0.38s cubic-bezier(0.4,0,0.2,1),opacity 0.38s';
+    ne.style.transform='translateX(0)';ne.style.opacity='1';ne.style.pointerEvents='all';
+    ne.querySelectorAll('[class*="fu"]').forEach(function(el){
+      var cl=el.className;el.style.animation='none';void el.offsetWidth;el.className=cl;
+    });
+  });});
+  setTimeout(function(){
+    ce.className=ce.className.replace(' active','');ce.style.cssText='';
+    if(ne.className.indexOf('active')<0)ne.className+=' active';
+    ne.style.cssText='';
+  },400);
+  cur=n;
+  document.getElementById('pgf').style.width=PROG[n]+'%';
+  updateFtr();
+  setTimeout(function(){document.getElementById('s'+n).scrollTop=0;},50);
+}
+
+function updateFtr(){
+  var back=document.getElementById('btnback');
+  var next=document.getElementById('btnnext');
+  next.textContent=BTXT[cur]||'CONTINUAR →';
+  back.style.display=(cur>0&&cur<5)?'flex':'none';
+  next.disabled=(cur===1&&!selPlan);
+}
+
+function navNext(){
+  if(cur===0){goTo(1,1);return;}
+  if(cur===1){if(!selPlan){toast('⚠️ Elige un plan primero','err');return;}setupCot();goTo(2,1);return;}
+  if(cur===2){goTo(3,1);renderCal();return;}
+  if(cur===3){
+    if(!selDay||!selHour){toast('⚠️ Elige día y hora','err');return;}
+    fillSum();goTo(4,1);return;
+  }
+  if(cur===4){enviar();return;}
+  if(cur===5){resetAll();return;}
+}
+function navBack(){if(cur>0&&cur<5)goTo(cur-1,-1);}
+
+// ── STATE (var = global scope, no issues) ──
+var selPlan=null,eqs=1,freqN=1,freqDisc=0;
+var addons={r:false,b:false,i:false};
+var AP={r:80000,b:60000,i:40000};
+var PB={basico:70000,empresarial:65000,corporativo:0};
+var PMAX={basico:5,empresarial:30,corporativo:9999};
+var PFLBL={1:'1 visita semestral',2:'2 visitas anuales',4:'Trimestral (4/año)'};
+var DIAG=10000;
+
+// CALENDAR STATE — all var, all global
+var selDay=null,selMon=null,selYr=null,selHour=null;
+var vY=2026,vM=3;
+var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+var DIAS=['lunes','martes','miércoles','jueves','viernes','sábado'];
+var TAKEN={5:[9,14],7:[10,11],10:[9,13],14:[14,15],17:[9]};
+var HRS=[9,10,11,13,14,15,16];
+
+// ── PLAN ──
+function pickPlan(p){
+  selPlan=p;
+  ['basico','empresarial','corporativo'].forEach(function(k){
+    document.getElementById('pc-'+k).classList.toggle('sel',k===p);
+  });
+  document.getElementById('btnnext').disabled=false;
+}
+function setupCot(){
+  var max=PMAX[selPlan];
+  var base=PB[selPlan];
+  document.getElementById('emaxl').textContent='máx. '+(max>50?'ilimitado':max);
+  document.getElementById('bpl').textContent=base?'$'+base.toLocaleString('es-CO'):'Personalizado';
+  document.getElementById('freqcard').style.display=selPlan==='corporativo'?'none':'block';
+  eqs=Math.min(eqs,max);
+  document.getElementById('eqn').textContent=eqs;
+  document.getElementById('cminus').disabled=eqs<=1;
+  document.getElementById('cplus').disabled=eqs>=max;
+  recalc();
+}
+
+// ── COTIZADOR ──
+function fmt(n){return'$'+Math.round(n).toLocaleString('es-CO');}
+function calcTot(){
+  if(selPlan==='corporativo')return null;
+  var base=(PB[selPlan]||0)*eqs*freqN;
+  var at=0;['r','b','i'].forEach(function(k){if(addons[k])at+=AP[k];});
+  return(base+at+DIAG)*(1-freqDisc/100);
+}
+function recalc(){
+  if(!selPlan)return;
+  if(selPlan==='corporativo'){
+    document.getElementById('ptot').textContent='A medida';
+    document.getElementById('piva').textContent='Cotización personalizada';
+    return;
+  }
+  var base=(PB[selPlan]||0)*eqs*freqN;
+  var at=0;['r','b','i'].forEach(function(k){if(addons[k])at+=AP[k];});
+  var sub=base+at+DIAG;
+  var disc=sub*freqDisc/100;
+  var tot=sub-disc;
+  document.getElementById('pbl').textContent='Mantto ('+eqs+'eq × '+PFLBL[freqN]+')';
+  document.getElementById('pbv').textContent=fmt(base);
+  if(freqDisc>0){
+    document.getElementById('prd').style.display='';
+    document.getElementById('pdl').textContent='Descuento ('+freqDisc+'%)';
+    document.getElementById('pdv').textContent='−'+fmt(disc);
+  }else document.getElementById('prd').style.display='none';
+  document.getElementById('ptot').textContent=fmt(tot);
+  document.getElementById('piva').innerHTML='+IVA 19% = <strong>'+fmt(tot*1.19)+' COP</strong>';
+}
+function changeEq(d){
+  var max=PMAX[selPlan||'basico'];
+  eqs=Math.min(max,Math.max(1,eqs+d));
+  document.getElementById('eqn').textContent=eqs;
+  document.getElementById('cminus').disabled=eqs<=1;
+  document.getElementById('cplus').disabled=eqs>=max;
+  recalc();
+}
+function pickFreq(el,n,d){
+  document.querySelectorAll('.fo').forEach(function(e){e.classList.remove('sel');});
+  el.classList.add('sel');freqN=n;freqDisc=d;recalc();
+}
+function togA(k,price){
+  addons[k]=!addons[k];
+  document.getElementById('tog'+k).classList.toggle('on',addons[k]);
+  document.getElementById('pr'+k).style.display=addons[k]?'':'none';
+  recalc();
+}
+
+// ── CALENDAR ──
+function renderCal(){
+  document.getElementById('calt').textContent=MESES[vM]+' '+vY;
+  var g=document.getElementById('calg');
+  g.innerHTML='';
+  var today=new Date(2026,3,23);
+  var firstDow=(new Date(vY,vM,1).getDay()+6)%7;
+  var days=new Date(vY,vM+1,0).getDate();
+  for(var i=0;i<firstDow;i++)g.appendChild(document.createElement('div'));
+  for(var d=1;d<=days;d++){
+    (function(day){
+      var btn=document.createElement('button');
+      btn.className='db';btn.textContent=day;
+      var dt=new Date(vY,vM,day);
+      var dow=dt.getDay();
+      if(dt<=today||dow===0){btn.classList.add('dis');}
+      else{
+        if(dt.toDateString()===today.toDateString())btn.classList.add('tod');
+        if(selDay===day&&selMon===vM&&selYr===vY)btn.classList.add('sel');
+        btn.onclick=function(){pickDay(day,btn);};
+      }
+      g.appendChild(btn);
+    })(d);
+  }
+}
+function chMes(d){
+  vM+=d;
+  if(vM>11){vM=0;vY++;}if(vM<0){vM=11;vY--;}
+  selDay=null;selHour=null;
+  renderCal();clearHrs();
+}
+function pickDay(d,btn){
+  selDay=d;selMon=vM;selYr=vY;selHour=null;
+  document.querySelectorAll('.db').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+  renderHrs(d);
+  document.getElementById('dbadge').style.display='none';
+}
+function renderHrs(d){
+  var tk=TAKEN[d]||[];
+  var w=document.getElementById('hwr');
+  var ph=document.getElementById('hph');
+  w.innerHTML='';w.style.display='flex';ph.style.display='none';
+  HRS.forEach(function(h){
+    var btn=document.createElement('button');
+    btn.className='hb'+(tk.indexOf(h)>=0?' taken':'');
+    btn.textContent=h+':00';
+    if(tk.indexOf(h)<0){
+      (function(hour,b){b.onclick=function(){pickHr(hour,b);};})(h,btn);
+    }
+    if(selHour===h)btn.classList.add('sel');
+    w.appendChild(btn);
+  });
+}
+function pickHr(h,btn){
+  selHour=h;  // ← FIXED: was selH, now correctly selHour
+  document.querySelectorAll('.hb').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+  var dt=new Date(selYr,selMon,selDay);
+  var di=(dt.getDay()+6)%7;
+  var lbl=DIAS[di]+' '+selDay+' de '+MESES[selMon]+' · '+h+':00 – '+(h+2)+':00';
+  var b=document.getElementById('dbadge');
+  b.innerHTML='✓ '+lbl;b.style.display='block';
+}
+function clearHrs(){
+  document.getElementById('hwr').style.display='none';
+  document.getElementById('hph').style.display='block';
+  document.getElementById('hwr').innerHTML='';
+  document.getElementById('dbadge').style.display='none';
+}
+function getFecha(){
+  if(!selDay)return'—';
+  var dt=new Date(selYr,selMon,selDay);
+  var di=(dt.getDay()+6)%7;
+  return DIAS[di]+' '+selDay+' de '+MESES[selMon]+' de '+selYr+' · '+selHour+':00';
+}
+
+// ── SUMMARY ──
+function fillSum(){
+  var tot=calcTot();
+  var pn=(selPlan||'').charAt(0).toUpperCase()+(selPlan||'').slice(1);
+  document.getElementById('sump').textContent=pn;
+  document.getElementById('sume').textContent=eqs+(eqs===1?' equipo':' equipos');
+  document.getElementById('sumf').textContent=selPlan==='corporativo'?'A medida':PFLBL[freqN];
+  document.getElementById('sumd').textContent=getFecha();
+  document.getElementById('sumt').textContent=tot?fmt(tot*1.19)+' COP':'A medida';
+}
+
+// ── SEND ──
+function enviar(){
+  var n=document.getElementById('fn').value.trim();
+  var t=document.getElementById('ft').value.trim();
+  var e=document.getElementById('fe').value.trim();
+  var d=document.getElementById('fd').value.trim();
+  var o=document.getElementById('fo').value.trim();
+  if(!n||!t||!e||!d){toast('⚠️ Completa todos los campos *','err');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){toast('⚠️ Correo inválido','err');return;}
+  var btn=document.getElementById('btnnext');
+  btn.disabled=true;btn.textContent='Enviando...';
+  var ref='DIAG-'+Date.now().toString().slice(-6);
+  var tot=calcTot();
+  var totStr=tot?fmt(tot*1.19)+' COP':'A medida';
+  var fecha=getFecha();
+  var pn=(selPlan||'').charAt(0).toUpperCase()+(selPlan||'').slice(1);
+  var adl=[];['r','b','i'].forEach(function(k){if(addons[k])adl.push({r:'Soporte remoto',b:'Respaldo nube',i:'Informe PDF'}[k]);});
+  var adlStr=adl.length?adl.join(', '):'Ninguno';
+  document.getElementById('cref').textContent=ref;
+  document.getElementById('cref2').textContent=ref;
+  document.getElementById('cnom').textContent=n;
+  document.getElementById('cem').textContent=e;
+  document.getElementById('ctel').textContent='+57 '+t;
+  document.getElementById('cfch').textContent=fecha;
+  document.getElementById('cdir').textContent=d;
+  document.getElementById('cpln').textContent=pn+' · '+eqs+(eqs===1?' equipo':' equipos');
+  document.getElementById('ctot').textContent=totStr;
+  document.getElementById('stem').className='spl ld';
+  document.getElementById('stem').innerHTML='<span class="spin"></span>Enviando correo...';
+  document.getElementById('stwa').className='spl ld';
+  document.getElementById('stwa').innerHTML='<span class="spin"></span>Enviando WhatsApp...';
+  goTo(5,1);
+  btn.disabled=false;btn.textContent=BTXT[4];
+  sendEmail({ref:ref,n:n,e:e,t:t,d:d,fecha:fecha,pn:pn,totStr:totStr,adl:adlStr,o:o||'Ninguna'});
+  var msgC='✅ *Nexora · Cita Confirmada*\n\nHola '+n+'!\n\n📅 '+fecha+'\n📍 '+d+'\n🔧 '+pn+' · '+eqs+(eqs===1?' equipo':' equipos')+'\n💰 '+totStr+'\n🚗 Domicilio: GRATIS\n\nRef: '+ref+'\n\n¡Nos vemos pronto!\n— Nexora, Apartadó';
+  var msgE='🔔 *Nexora · Nueva cita*\n\nCliente: '+n+'\nTel: '+t+'\nEmail: '+e+'\nDir: '+d+'\nFecha: '+fecha+'\nPlan: '+pn+' · '+eqs+' equipos\nTotal: '+totStr+'\nRef: '+ref;
+  sendWA(t,msgC,'stwa');
+  sendWA(cfg.wa||'',msgE,null);
+}
+async function sendEmail(d){
+  var st=document.getElementById('stem');
+  if(!cfg.k){st.className='spl warn';st.innerHTML='⚠️ EmailJS no config — triple clic logo';return;}
+  try{
+    emailjs.init(cfg.k);
+    await emailjs.send(cfg.s,cfg.tp,{comprobante:d.ref,nombre:d.n,email:d.e,telefono:d.t,fecha:d.fecha,servicio:'Plan '+d.pn,valor:'Diagnóstico $10.000 + Domicilio Gratis',total:d.totStr,direccion:d.d,addons:d.adl,observaciones:d.o});
+    st.className='spl ok';st.innerHTML='✓ Correo enviado a '+d.e;
+  }catch(err){st.className='spl err';st.innerHTML='✗ '+(err.text||err.message||'Error EmailJS');}
+}
+async function sendWA(phone,msg,stId){
+  if(stId){var s=document.getElementById(stId);s.className='spl ld';s.innerHTML='<span class="spin"></span>Enviando WhatsApp...';}
+  if(!cfg.cb){if(stId){var s2=document.getElementById(stId);s2.className='spl warn';s2.innerHTML='⚠️ CallMeBot no configurado';}return;}
+  var clean=phone.replace(/\D/g,'');
+  var url='https://api.callmebot.com/whatsapp.php?phone='+clean+'&text='+encodeURIComponent(msg)+'&apikey='+cfg.cb;
+  try{
+    await fetch(url,{mode:'no-cors'});
+    if(stId){var s3=document.getElementById(stId);s3.className='spl ok';s3.innerHTML='✓ WhatsApp enviado';}
+  }catch(e){
+    if(stId){var s4=document.getElementById(stId);s4.className='spl warn';s4.innerHTML='⚠️ Verifica API key CallMeBot';}
+  }
+}
+
+// ── TOAST ──
+function toast(msg,type){
+  var t=document.getElementById('toast');
+  document.getElementById('tmsg').textContent=msg;
+  t.className='show '+(type||'');
+  clearTimeout(t._t);t._t=setTimeout(function(){t.className='';},3200);
+}
+
+// ── RESET ──
+function resetAll(){
+  selPlan=null;eqs=1;freqN=1;freqDisc=0;
+  addons={r:false,b:false,i:false};
+  selDay=null;selMon=null;selYr=null;selHour=null;
+  ['r','b','i'].forEach(function(k){document.getElementById('tog'+k).classList.remove('on');});
+  ['basico','empresarial','corporativo'].forEach(function(k){document.getElementById('pc-'+k).classList.remove('sel');});
+  ['fn','ft','fe','fd','fo'].forEach(function(id){document.getElementById(id).value='';});
+  for(var i=1;i<TOTAL;i++){var s=document.getElementById('s'+i);s.className='scr';s.style.cssText='';}
+  var s0=document.getElementById('s0');s0.className='scr active';s0.style.cssText='';
+  cur=0;
+  document.getElementById('pgf').style.width='0%';
+  updateFtr();
+  document.getElementById('s0').scrollTop=0;
+}
+
+// Init
+updateFtr();
+renderCal();
+</script>
+</body>
+</html>
